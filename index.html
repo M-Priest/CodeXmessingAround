@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a11">
+  <meta name="description" content="An interactive orbital simulator. Adjust gravity, orbit radius, and inclination, and watch a satellite respond in real time.">
+  <title>Apogee — Orbital Lab</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="renderer.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="orbit-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="11" ry="5.8" transform="rotate(-37 12 12)"/><circle cx="19.8" cy="6" r="1.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="guide-icon" viewBox="0 0 24 24"><path d="M5 4h13a1 1 0 0 1 1 1v15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm-1 14a2 2 0 0 1 2-2h13M8 8h7m-7 4h5"/></symbol>
+    <symbol id="controls-icon" viewBox="0 0 24 24"><path d="M4 6h6m4 0h6M4 12h11m4 0h1M4 18h2m4 0h10m-8-14v4m5 2v4m-9 2v4"/></symbol>
+    <symbol id="reset-icon" viewBox="0 0 24 24"><path d="M4 11a8 8 0 1 1 2.3 6.7M4 5v6h6"/></symbol>
+    <symbol id="pause-icon" viewBox="0 0 24 24"><path d="M9 5v14m6-14v14" stroke-width="3"/></symbol>
+    <symbol id="play-icon" viewBox="0 0 24 24"><path d="m9 5 10 7-10 7z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="expand-icon" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
+    <symbol id="shrink-icon" viewBox="0 0 24 24"><path d="M4 9h5V4m11 5h-5V4M4 15h5v5m11-5h-5v5"/></symbol>
+    <symbol id="close-icon" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="arrow-icon" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+  </svg>
+
+  <header class="site-header">
+    <div class="shell header-inner">
+      <div class="brand"><span class="brand-mark"><svg class="icon"><use href="#orbit-icon"/></svg></span> apogee<span class="brand-point">.</span><span class="brand-divider"></span><span class="brand-label">ORBITAL LAB</span></div>
+      <button class="guide-button" id="open-guide"><svg class="icon"><use href="#guide-icon"/></svg> Field guide</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow"><span></span> INTERACTIVE SPACE LAB</p>
+      <h1 id="title">Play with <em>gravity.</em></h1>
+      <p class="intro-description">Put a satellite in motion. Shape its orbit and see how the mechanics change in real time.</p>
+    </section>
+
+    <div class="workspace">
+      <section class="simulation" aria-label="Orbit simulation">
+        <div class="viewport" id="orbit-viewport">
+          <canvas id="orbit-canvas" aria-label="Animated view of a satellite orbiting a gas giant" role="img"></canvas>
+          <div class="viewport-top">
+            <div class="view-label"><span class="live-dot" id="live-dot"></span><span id="live-label">LIVE SIMULATION</span></div>
+            <button class="icon-button fullscreen-button" id="fullscreen" aria-label="Enter fullscreen" title="Enter fullscreen"><svg class="icon"><use href="#expand-icon"/></svg></button>
+          </div>
+          <div class="viewport-bottom">
+            <div class="legend"><span><i></i> Satellite</span><span><i></i> Orbit path</span></div>
+            <span class="view-coordinate">ORBIT VIEW</span>
+          </div>
+        </div>
+        <dl class="telemetry" aria-label="Orbital measurements">
+          <div><dt>ORBITAL VELOCITY</dt><dd><span id="velocity">—</span> <small>km/s</small></dd></div>
+          <div><dt>ORBITAL PERIOD</dt><dd><span id="period">—</span> <small>hr</small></dd></div>
+          <div><dt>ALTITUDE</dt><dd><span id="altitude">—</span> <small>km</small></dd></div>
+        </dl>
+      </section>
+
+      <section class="control-panel" aria-labelledby="controls-title">
+        <div class="control-heading">
+          <span class="control-icon"><svg class="icon"><use href="#controls-icon"/></svg></span>
+          <div><h2 id="controls-title">Flight controls</h2><p>Tune your simulation</p></div>
+        </div>
+        <div class="sliders">
+          <div class="parameter">
+            <div class="parameter-heading"><label for="gravity">Surface gravity</label><output for="gravity" id="gravity-value">1.0 g</output></div>
+            <input id="gravity" type="range" min="0.3" max="2.5" step="0.1" value="1">
+            <div class="range-limits" aria-hidden="true"><span>0.3 g</span><span>2.5 g</span></div>
+          </div>
+          <div class="parameter">
+            <div class="parameter-heading"><label for="distance">Orbit radius</label><output for="distance" id="distance-value">4.0 Rₚ</output></div>
+            <input id="distance" type="range" min="2" max="8" step="0.1" value="4">
+            <div class="range-limits" aria-hidden="true"><span>2 Rₚ</span><span>8 Rₚ</span></div>
+          </div>
+          <div class="parameter">
+            <div class="parameter-heading"><label for="inclination">Inclination</label><output for="inclination" id="inclination-value">28°</output></div>
+            <input id="inclination" type="range" min="0" max="75" step="1" value="28">
+            <div class="range-limits" aria-hidden="true"><span>0°</span><span>75°</span></div>
+          </div>
+        </div>
+        <div class="trail-row"><label for="trails">Show orbit trail</label><input class="switch" id="trails" type="checkbox" role="switch" checked></div>
+        <div class="transport">
+          <button id="playback" class="play-button"><svg class="icon"><use href="#pause-icon"/></svg><span>Pause simulation</span></button>
+          <button class="icon-button reset-button" id="reset" title="Reset simulation" aria-label="Reset simulation"><svg class="icon"><use href="#reset-icon"/></svg></button>
+        </div>
+      </section>
+    </div>
+
+    <section class="presets" aria-labelledby="presets-title">
+      <div class="preset-heading"><h2 id="presets-title">Orbit presets</h2><p>Start with a flight path, then make it yours.</p></div>
+      <div class="preset-grid">
+        <button class="preset" data-preset="0" aria-pressed="true"><span class="preset-art art-balanced" aria-hidden="true"><i></i></span><span class="preset-text"><strong>Balanced orbit</strong><small>A steady, mid-range circuit</small></span><svg class="icon preset-arrow"><use href="#arrow-icon"/></svg></button>
+        <button class="preset" data-preset="1" aria-pressed="false"><span class="preset-art art-close" aria-hidden="true"><i></i></span><span class="preset-text"><strong>Close pass</strong><small>Fast and close to the planet</small></span><svg class="icon preset-arrow"><use href="#arrow-icon"/></svg></button>
+        <button class="preset" data-preset="2" aria-pressed="false"><span class="preset-art art-wide" aria-hidden="true"><i></i></span><span class="preset-text"><strong>Deep orbit</strong><small>A wide, steeply tilted circuit</small></span><svg class="icon preset-arrow"><use href="#arrow-icon"/></svg></button>
+      </div>
+    </section>
+    <footer class="site-footer"><span>APOGEE ORBITAL LAB</span><span>Circular orbit model · Time accelerated</span></footer>
+  </main>
+
+  <dialog class="guide" id="field-guide" aria-labelledby="guide-title">
+    <div class="guide-heading">
+      <div><p class="eyebrow"><span></span> APOGEE NOTES</p><h2 id="guide-title">Field guide</h2></div>
+      <form method="dialog"><button class="icon-button" aria-label="Close field guide"><svg class="icon"><use href="#close-icon"/></svg></button></form>
+    </div>
+    <dl>
+      <div><dt>Surface gravity</dt><dd>Measured in Earth gravities. At the same radius, stronger gravity means the satellite travels faster and finishes an orbit sooner.</dd></div>
+      <div><dt>Orbit radius</dt><dd>Measured from the planet’s center in planet radii (Rₚ). Farther out, the satellite travels more slowly and has more distance to cover.</dd></div>
+      <div><dt>Inclination</dt><dd>Tilts the satellite’s orbit relative to the planet’s equatorial plane. It changes the path’s orientation while leaving the orbital speed and period unchanged.</dd></div>
+    </dl>
+    <p class="guide-note">Apogee models circular orbits around a planet with a radius of 24,000 km. The illustration compresses distances to fit on screen and accelerates time by 3,600×.</p>
+  </dialog>
+</body>
+</html>
